@@ -1,0 +1,60 @@
+@startuml
+title Doorman Deployment Diagram
+!pragma layout smetana
+
+node ExternalService [
+  External Service
+  --
+  Relying Party
+  OIDC Client
+]
+
+cloud "Platform (Union)" {
+  node Orchestrator [
+    Orchestrator
+    --
+    Kubernetes Control Plane
+    Scales containers
+    Trusted CA for PKI
+    Distributes certificates
+  ]
+  node InternalService [
+    Internal Service
+    --
+    Relying Party
+    OIDC Client
+  ]
+  rectangle "Identity and Access Management (Doorman)" as IAM {
+    node AuthenticationProvider [
+      Authentication Provider
+      --
+      OIDC Provider
+      Manages user authentication sessions
+      Many instances
+    ]
+    collections MFA [
+      MFA microservices
+      Many instances
+    ]
+    node DatabaseWrapper {
+      database Database [
+        User Information
+        Session Management Information (for authentication)
+        RBAC, PBAC, OIDC Claim Access (for authorization)
+        multiple instances (sharding)
+        CAP Theorem (prioritize consistency over availability)
+      ]
+    }
+    AuthenticationProvider -right-> MFA : for authentication
+    AuthenticationProvider -down-> DatabaseWrapper : reads/writes
+    MFA -down-> DatabaseWrapper : reads
+  }
+  Orchestrator -left-> InternalService : creates
+  Orchestrator -down-> AuthenticationProvider : creates
+  Orchestrator -down-> MFA : creates
+  Orchestrator -right-> DatabaseWrapper : creates
+}
+InternalService -down-> AuthenticationProvider : for authorization
+ExternalService -right-> AuthenticationProvider : for authorization
+
+@enduml

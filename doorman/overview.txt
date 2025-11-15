@@ -1,0 +1,166 @@
+identity and access management service
+	requirements
+		single sign on
+		single log off
+		multi factor authentication
+		millions of Users
+	
+	responsibilities
+		authentication (platform wide & external)
+		authorization (platform wide & external)
+		
+	ended up using this standard
+		https://openid.net/specs/openid-connect-core-1_0.html
+
+
+MFA Authentication Methods
+Something I am
+	fingerprint
+	face scan
+	voice
+	
+Something I know
+	password
+	security questions
+
+Something I have
+	Smart Card (Physical Hardware)
+		Chip
+		RFID
+		USB
+	Device with trusted module
+		authentication app
+		time-based pin
+
+
+Information Database (relational DB)
+	User Table
+		user id (key)
+		username (unique)
+		personal information
+			name
+			phone
+			email
+			address
+			birthday
+			etc.
+		auth information
+			password
+				password hash 1
+				salt 1
+				password hash 2
+				salt 2
+			security questions
+				question 1 password using above format
+				question 2 password using above format
+				question 3 password using above format
+			biometric information
+				fingerprint
+				face scan
+				voice
+			smart card
+				chip public key
+				RFID public key
+				USB public key
+			authentication device applications
+				device 1 public key
+				device 2 public key
+				device 3 public key
+	Device Table
+		device id (key)
+		mac address
+
+	Session Table (junction table)
+		session id (composite key of user id and device id)
+		user id (foreign key)
+		device id (foreign key)
+		start_time
+
+	Service Table
+		service id (key)
+		
+	ServiceSession Table(junction table)
+		servicesession id (composite key of service id and session id)
+		session id (foreign key)
+		service id (key)
+		
+	Group Table
+		group id (key)
+		
+	UserGroup Table (junction table)
+		usergroup id (composite key of user id and role id)
+		user id (foreign key)
+		group id (foreign key)
+		
+	Access Table - RBAC - which users can use which services (junction table)
+		access id (composite key of group id and service id)
+		group id (foreign key)
+		service id (foreign key)
+		other authorization information
+	
+	Claims Table
+		claim id (key)
+		information fields
+		
+	Permissions Table (junction table)
+		permission id (composite key of user id, service id, and claim id)
+		user id (foreign key)
+		service id (foreign key)
+		claim id (foreign key)
+		
+Database Wrapper Server
+	Trust Internal Certificate Authority
+	has public private key pair
+	User APIs
+		createUser(username, salt, password hash, phone number) -> success/fail
+		getUser(username) -> salt, password hash, phone number
+		deleteUser(username) -> success/fail
+	Session APIs
+		startSession(username, device)
+		endSession(username, device)
+		startServiceSession(username, device)
+		getServiceSessions(username, device)
+		endServiceSession(username, device)
+	RBAC APIs
+		createGroup(group name)
+		deleteGroup(group name)
+		addUserToGroup(user, group)
+		removeUserFromGroup(user, group)
+		giveAccess(group, service, other authorization information)
+		hasAccess(group, service)
+		removeAccess(group, service)
+		changeAccess(group, service, other authorization information)
+	Permission APIs
+		givePermission(username, service, information field)
+		hasPermission(username, service, information field)
+		removePermission(username, service, information field)
+
+Authentication Server (MFA)
+	Trust Internal Certificate Authority
+	has public private key pair
+	incorporate with NTLMv2 ideas
+	APIs
+
+OpenID Connect Provider
+	Trust Internal Certificate Authority
+	has public private key pair
+	APIs
+		all OIDC APIs
+		terminateAuthSession(username, device)
+
+Service Server (Relying Party/Service Provider)
+	Trust Internal Certificate Authority
+	has public private key pair
+	APIs
+		all OID Relying Party APIs
+
+Orchestrator (kubernetes configuration)
+	Internal Certificate Authority (PKI implementation)
+	in charge of scaling/deployment
+
+
+		
+	
+
+
+
